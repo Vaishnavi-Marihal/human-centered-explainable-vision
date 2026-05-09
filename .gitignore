@@ -3,6 +3,7 @@ __pycache__/
 *.pyo
 .env
 gradcam_output.jpg
+test.jpg
 test_classifier.py
 test_gradcam.py
 test_uncertainty.py
