@@ -1,5 +1,7 @@
 # Human-Centered Explainable Vision System
 
+**Live Demo:** https://explainable-vision.streamlit.app
+
 > Most image classifiers return only labels and confidence scores.
 > While technically accurate, these outputs often fail to communicate
 > *why* a prediction was made or *how* users should interpret
