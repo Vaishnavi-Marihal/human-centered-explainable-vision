@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  body {
+    font-family: Georgia, serif;
+    font-size: 12pt;
+    line-height: 1.6;
+    margin: 2.5cm;
+    color: #111;
+  }
+  h1 {
+    font-size: 18pt;
+    margin-bottom: 4px;
+  }
+  h2 {
+    font-size: 13pt;
+    margin-top: 24px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 3px;
+  }
+  h3 {
+    font-size: 12pt;
+    margin-top: 16px;
+    margin-bottom: 4px;
+  }
+  p {
+    margin: 8px 0;
+  }
+  .subtitle {
+    font-size: 11pt;
+    color: #444;
+    margin-bottom: 2px;
+  }
+  .author {
+    font-size: 11pt;
+    margin-top: 6px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    font-size: 11pt;
+  }
+  th {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  td {
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+  }
+  .math {
+    font-family: "Courier New", monospace;
+    background: #f8f8f8;
+    padding: 8px 14px;
+    margin: 10px 0;
+    border-left: 3px solid #aaa;
+    font-size: 11pt;
+  }
+  ul {
+    margin: 6px 0;
+    padding-left: 20px;
+  }
+  li {
+    margin: 4px 0;
+  }
+  .section-note {
+    font-style: italic;
+    color: #555;
+    font-size: 11pt;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 20px 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>Human-Centered Explainable Vision System</h1>
+<p class="subtitle">Technical Report — Project Documentation</p>
+<p class="author">Vaishnavi Marihal &nbsp;|&nbsp; May 2026</p>
+<p class="author">B.E. Computer Science, Jain College of Engineering
+and Technology, Hubballi</p>
+
+<hr>
+
+<h2>1. Motivation</h2>
+
+<p>
+Standard image classifiers return a label and a confidence score.
+These outputs are statistically informative but interactively
+insufficient. A user receiving the output "golden retriever: 81.5%"
+cannot determine which visual features drove the prediction, whether
+the confidence score reflects genuine certainty or distributional
+ambiguity, what alternative interpretations the model considered,
+or whether the prediction is trustworthy for their specific context.
+</p>
+
+<p>
+This gap between statistical correctness and human usability
+motivated this project. The central question is not how to make
+the classifier more accurate, but how to make its outputs more
+interpretable to a human operator.
+</p>
+
+<p>
+This concern emerged directly from prior project work. A fake news
+detection system achieving 98% accuracy returned binary predictions
+with no mechanism for the user to understand why a particular article
+was flagged or how confident the system actually was. A YOLOv4 video
+summarisation system detected human activity with measurable precision
+but produced clips with no contextual framing for the operator. In
+both cases, the system was statistically competent and interactively
+hollow. This project is a first attempt to address that hollowness
+systematically.
+</p>
+
+<h2>2. System Design</h2>
+
+<p>
+The system is structured around five components: a visual classifier,
+an uncertainty module, a saliency map generator, a query interpreter,
+and an explanation engine. The design is deliberately constrained.
+Interaction is structured through five predefined explanation intents
+rather than open-ended natural language. This constraint is
+intentional — a more interpretable interaction architecture for a
+project about interpretability.
+</p>
+
+<h3>2.1 Pipeline</h3>
+
+<div class="math">
+Image upload
+  → ResNet50 inference (top-5 predictions + full softmax)
+  → Entropy computation + confidence band assignment
+  → Grad-CAM heatmap generation
+  → User query
+  → Rule-based intent detection
+  → Explanation engine
+  → Visual + textual response
+</div>
+
+<h3>2.2 Classifier</h3>
+
+<p>
+A pretrained ResNet50 from torchvision is used for inference only —
+no fine-tuning was performed. ResNet50 was selected for its
+well-documented layer structure, which makes Grad-CAM hook
+registration straightforward, and for its strong ImageNet baseline
+performance. The model returns the full 1000-class softmax
+probability distribution, which is used downstream for entropy
+computation.
+</p>
+
+<h3>2.3 Uncertainty Module</h3>
+
+<p>
+Uncertainty is quantified via Shannon entropy over the full softmax
+distribution:
+</p>
+
+<div class="math">
+H(p) = -∑ pᵢ log(pᵢ)   for i = 1 to 1000
+</div>
+
+<p>
+Raw entropy is normalised against the maximum possible entropy for
+1000 classes (log 1000), yielding a value in [0, 1]. A normalised
+entropy of 0 indicates a perfectly certain prediction. A value of 1
+indicates maximal uncertainty with probability spread equally across
+all 1000 classes.
+</p>
+
+<p>
+Three confidence bands are defined by entropy thresholds:
+</p>
+
+<table>
+  <tr><th>Band</th><th>Entropy Range</th><th>Interpretation</th></tr>
+  <tr><td>High</td><td>&lt; 0.30</td>
+      <td>Probability concentrated on few classes</td></tr>
+  <tr><td>Cautious</td><td>0.30 – 0.55</td>
+      <td>Moderate spread across classes</td></tr>
+  <tr><td>Ambiguous</td><td>&gt; 0.55</td>
+      <td>High distributional uncertainty</td></tr>
+</table>
+
+<p>
+Effective class count is computed as exp(H) — the number of classes
+carrying meaningful probability mass. A value of 2.4 indicates the
+model is effectively choosing between approximately 2-3 classes,
+regardless of which specific classes those are.
+</p>
+
+<h3>2.4 Grad-CAM</h3>
+
+<p>
+Grad-CAM is implemented from first principles following Selvaraju
+et al. (2017), without any external explainability library.
+Forward and backward hooks are registered on ResNet50's final
+convolutional layer (layer4). For a target class c:
+</p>
+
+<div class="math">
+αₖᶜ = (1/Z) ∑ᵢⱼ (∂yᶜ / ∂Aᵢⱼᵏ)
+
+L_GradCAM = ReLU( ∑ₖ αₖᶜ · Aᵏ )
+</div>
+
+<p>
+Where A^k is feature map k from layer4, y^c is the pre-softmax
+score for class c, and alpha represents the global average pooled
+gradient — the importance weight for each feature map. ReLU retains
+only regions that positively contributed to the target class
+prediction. The resulting heatmap is upsampled to 224x224 and
+overlaid on the original image using a JET colormap.
+</p>
+
+<h3>2.5 Query Interpreter</h3>
+
+<p>
+User queries are mapped to one of five structured intents using
+rule-based regex pattern matching. No NLP library or transformer
+model is used. This design decision is intentional — using a
+black-box model to parse queries in a system designed to explain
+black-box predictions would be architecturally contradictory.
+</p>
+
+<table>
+  <tr><th>Intent</th><th>Example Query</th><th>Output</th></tr>
+  <tr><td>why_prediction</td>
+      <td>"Why did you classify this?"</td>
+      <td>Grad-CAM + attention description</td></tr>
+  <tr><td>confidence</td>
+      <td>"How confident are you?"</td>
+      <td>Entropy + band + effective classes</td></tr>
+  <tr><td>important_region</td>
+      <td>"Which part mattered most?"</td>
+      <td>Grad-CAM + spatial region label</td></tr>
+  <tr><td>alternative_prediction</td>
+      <td>"What else could this be?"</td>
+      <td>Top-3 alternatives + overlap note</td></tr>
+  <tr><td>comparison</td>
+      <td>"Why this instead of second?"</td>
+      <td>Side-by-side Grad-CAM for top-2</td></tr>
+</table>
+
+<h2>3. Evaluation</h2>
+
+<p>
+25 images were evaluated across five categories of increasing visual
+complexity. For each image, top-5 predictions, normalised entropy,
+confidence band, Grad-CAM focus pattern, and top-2 probability
+overlap were logged. Full results are available in
+evaluation/evaluation_log.csv.
+</p>
+
+<table>
+  <tr>
+    <th>Category</th><th>N</th><th>Avg Entropy</th>
+    <th>Avg Top-1 Prob</th><th>Diffuse Heatmaps</th>
+  </tr>
+  <tr><td>Clear</td><td>3</td><td>0.0939</td>
+      <td>0.7905</td><td>1/3</td></tr>
+  <tr><td>Moderate</td><td>5</td><td>0.2324</td>
+      <td>0.5693</td><td>2/5</td></tr>
+  <tr><td>Cluttered</td><td>5</td><td>0.3658</td>
+      <td>0.5217</td><td>5/5</td></tr>
+  <tr><td>Similar</td><td>5</td><td>0.0652</td>
+      <td>0.8281</td><td>4/5</td></tr>
+  <tr><td>OOD</td><td>4</td><td>0.4207</td>
+      <td>0.3414</td><td>1/4</td></tr>
+</table>
+
+<h3>3.1 Key Observations</h3>
+
+<p><strong>O1 — Entropy tracks visual complexity monotonically.</strong>
+Normalised entropy increased consistently from clear (0.0939) through
+moderate (0.2324) to cluttered (0.3658) and OOD (0.4207). Entropy
+functions as a reliable proxy for image-level uncertainty across
+varied scene types.</p>
+
+<p><strong>O2 — Cluttered images universally produced diffuse
+Grad-CAM activation.</strong> All 5 cluttered images produced diffuse
+heatmaps. When scenes contain multiple objects or busy backgrounds,
+the model cannot localise attention — activation spreads broadly.
+Visual complexity degrades spatial interpretability alongside
+confidence.</p>
+
+<p><strong>O3 — Confidence and attention focus are partially
+independent.</strong> Several high-confidence predictions produced
+diffuse Grad-CAM maps. Entropy-based confidence and Grad-CAM spatial
+focus capture different properties of model behaviour. A system
+reporting only confidence scores would miss this distinction.</p>
+
+<p><strong>O4 — Inter-class similar images showed unexpectedly low
+entropy.</strong> The similar category produced average entropy of
+0.0652 — lower than clear images. The model commits decisively even
+on visually confusable pairs. Low entropy reflects model commitment,
+not necessarily correctness.</p>
+
+<p><strong>O5 — OOD images correctly triggered high
+uncertainty.</strong> Out-of-distribution inputs produced the highest
+average entropy (0.4207) and lowest top-1 probability (0.3414).
+The uncertainty module correctly flagged these with cautious or
+ambiguous bands.</p>
+
+<p><strong>O6 — One clear-category image misclassified with moderate
+confidence.</strong> A red apple was classified as strawberry (37.5%,
+high band). Confidence bands reflect distributional certainty, not
+ground-truth correctness — a known limitation of softmax-based
+uncertainty estimation.</p>
+
+<h2>4. Limitations</h2>
+
+<ul>
+  <li><strong>Grad-CAM explanations are correlational, not
+  causal.</strong> Highlighted regions influenced the prediction
+  within the model's learned representation. They do not constitute
+  a causal account of class membership.</li>
+
+  <li><strong>Rule-based interaction limits linguistic
+  flexibility.</strong> Queries outside the five intent patterns
+  return an unknown response. This is a deliberate design constraint,
+  not an oversight.</li>
+
+  <li><strong>Softmax confidence is not perfectly calibrated
+  uncertainty.</strong> ResNet50 is known to be overconfident.
+  Normalised entropy provides a better signal than raw top-1
+  probability but remains derived from an uncalibrated distribution.
+  </li>
+
+  <li><strong>Explanations inherit ImageNet biases.</strong>
+  Predictions and activations reflect ImageNet class boundaries,
+  which may not align with human conceptual categories.</li>
+
+  <li><strong>Evaluation is qualitative and small-scale.</strong>
+  25 images across informal categories. Findings are observational,
+  not statistically validated.</li>
+</ul>
+
+<h2>5. Future Work</h2>
+
+<ul>
+  <li>Calibrated uncertainty via temperature scaling or Monte Carlo
+  Dropout to address softmax overconfidence</li>
+  <li>User-adaptive explanation verbosity based on inferred operator
+  expertise</li>
+  <li>Multimodal interaction allowing image region selection
+  alongside text queries</li>
+  <li>LLM-assisted explanation refinement as a post-processing layer
+  over structured engine outputs</li>
+</ul>
+
+<h2>6. Reference</h2>
+
+<p>
+Selvaraju, R.R., Cogswell, M., Das, A., Vedantam, R., Parikh, D.,
+&amp; Batra, D. (2017). Grad-CAM: Visual Explanations from Deep
+Networks via Gradient-based Localization. <em>ICCV 2017</em>.
+</p>
+
+<hr>
+<p class="section-note">
+This report documents system design, methodology, evaluation
+findings, and limitations of the Human-Centered Explainable Vision
+System. Full source code and evaluation data available at
+github.com/Vaishnavi-Marihal/human-centered-explainable-vision
+</p>
+
+</body>
+</html>

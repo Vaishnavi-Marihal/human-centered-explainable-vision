@@ -1,0 +1,26 @@
+filename,category,top1_label,top1_prob,top2_label,top2_prob,top2_gap,entropy,confidence_band,effective_classes,gradcam_focus,top2_overlap,status
+abstract colorful painting.jpg,ood,sarong,0.1881,jigsaw puzzle,0.1484,0.0397,0.4756,cautious,26.7,moderate,True,ok
+acoustic guitar white background.jpg,clear,acoustic guitar,0.9967,electric guitar,0.0021,0.9946,0.0039,high,1.0,moderate,False,ok
+banana yellow white background.jpg,clear,banana,0.9999,spaghetti squash,0.0001,0.9998,0.0002,high,1.0,moderate,False,ok
+birds flock flying sky many.jpg,cluttered,swimming trunks,0.1049,jersey,0.0597,0.0451,0.7141,ambiguous,138.7,diffuse,True,ok
+cat sitting windowsill.jpg,moderate,tabby,0.3579,Persian cat,0.3521,0.0059,0.3023,cautious,8.1,diffuse,True,ok
+cheetah close up face.jpg,similar,cheetah,0.9995,lynx,0.0002,0.9993,0.0007,high,1.0,diffuse,False,ok
+dog crowded park many people.jpg,moderate,lakeside,0.2856,mobile home,0.1347,0.1508,0.4729,cautious,26.2,diffuse,False,ok
+dog wearing sunglasses hat.jpg,unknown,golden retriever,0.6243,Labrador retriever,0.0577,0.5666,0.3229,cautious,9.3,diffuse,False,ok
+elephant walking savanna.jpg,moderate,African elephant,0.7442,tusker,0.2216,0.5225,0.0976,high,2.0,moderate,False,ok
+forest dense trees undergrowth.jpg,cluttered,mountain tent,0.0711,worm fence,0.0661,0.0049,0.6862,ambiguous,114.5,diffuse,True,ok
+golden retriever white background.jpg,unknown,golden retriever,0.8046,Labrador retriever,0.0558,0.7488,0.1836,high,3.6,moderate,False,ok
+husky dog face close up.jpg,similar,Eskimo dog,0.5597,Siberian husky,0.4207,0.139,0.1152,high,2.2,diffuse,True,ok
+labrador dog park grass.jpg,moderate,Labrador retriever,0.459,kuvasz,0.1906,0.2685,0.2892,high,7.4,moderate,False,ok
+leopard close up face.jpg,similar,leopard,0.9688,jaguar,0.0208,0.948,0.0236,high,1.2,diffuse,False,ok
+market street food stalls busy.jpg,cluttered,tobacco shop,0.6979,grocery store,0.1095,0.5884,0.1946,high,3.8,diffuse,False,ok
+persian cat fluffy white.jpg,similar,Persian cat,0.9853,Angora,0.0097,0.9755,0.0146,high,1.1,moderate,False,ok
+person in animal costume bear.jpg,ood,teddy,0.4584,toyshop,0.1875,0.2708,0.4071,cautious,16.6,moderate,False,ok
+red apple white background.jpg,clear,strawberry,0.375,Granny Smith,0.3331,0.0419,0.2777,high,6.8,diffuse,True,ok
+red sports car road.jpg,unknown,sports car,0.7328,convertible,0.1617,0.5711,0.1655,high,3.1,diffuse,False,ok
+robot humanoid figure.jpg,ood,knee pad,0.4492,tripod,0.1897,0.2595,0.3436,cautious,10.7,moderate,False,ok
+school bus yellow street.jpg,cluttered,school bus,0.9854,trailer truck,0.0093,0.9761,0.0134,high,1.1,diffuse,False,ok
+surreal painting melting clock dali.jpg,ood,book jacket,0.2699,Windsor tie,0.1131,0.1568,0.4565,cautious,23.4,diffuse,False,ok
+toucan bird branch.jpg,moderate,toucan,1.0,jacamar,0.0,0.9999,0.0001,high,1.0,moderate,False,ok
+traffic jam cars highway.jpg,cluttered,passenger car,0.749,prison,0.0576,0.6914,0.2205,high,4.6,diffuse,False,ok
+wolf face close up wildlife.jpg,similar,red wolf,0.627,timber wolf,0.1593,0.4678,0.172,high,3.3,diffuse,False,ok
